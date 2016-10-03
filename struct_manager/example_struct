@@ -14,14 +14,18 @@
         "type": "byte",
         "size": 5,
         "index": 5,
-        "default-val": 5
+        "default-value": 5
     },
     "last_field":
     {
         "type": "byte",
         "size": 5,
         "index": 8,
-        "value-not-in-list":  [1, 2, 3, 4, 5]
+        "black-list-values":  [2, 2, 255, 4, 5],
+        "lower-range": 56,
+        "upper-range": 255,
+        "default-value": 90
+
     }
   }
 }
