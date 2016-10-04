@@ -4,7 +4,7 @@
     "some_field":
     {
         "type": "dword",
-        "size": 4,
+        "size": 8,
         "lower-range": 0,
         "upper-range": 50,
         "index": 2
@@ -19,12 +19,11 @@
     "last_field":
     {
         "type": "byte",
-        "size": 5,
+        "size": 1,
         "index": 8,
-        "black-list-values":  [2, 2, 255, 4, 5],
+        "black-list-values":  [200, 2, 255, 4, 5],
         "lower-range": 56,
-        "upper-range": 255,
-        "default-value": 90
+        "upper-range": 255
 
     }
   }

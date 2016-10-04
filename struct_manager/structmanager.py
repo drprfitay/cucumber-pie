@@ -13,6 +13,7 @@ class StructManager(object):
     SIZE_ATTR = "size"
     INDEX_ATTR = "index"
     RANGE_ATTR = "range"
+    CURRENT_VAL_ATTR = "current_value"
     DEFAULT_ATTR = "default-value"
     UPPER_ATTR = "upper-range"
     LOWER_ATTR = "lower-range"
@@ -33,17 +34,38 @@ class StructManager(object):
     # key - data member name
     # value - data member value
     def __setitem__(self, key, value):
-        pass
+        # sanity check
+        if key not in self.struct_fields:
+            raise StructManagerException(exception_val=StructManagerException.ITEM_DOES_NOT_EXIST)
+
+        value_list = []
+
+        # if not an array
+        if not isinstance(value, list):
+            value_list = [value]
+        else:
+            value_list = value
+
+        # validate value, if invalid exception should be raised
+        self.__validate(key, value_list)
+
+        self.struct_fields[key][self.CURRENT_VAL_ATTR] = value_list
 
     # gets the value of some data member
     # item - data member name
     def __getitem__(self, item):
-        pass
+        # sanity check
+        if item not in self.struct_fields:
+            raise StructManagerException(exception_val=StructManagerException.ITEM_DOES_NOT_EXIST)
+
+        return self.struct_fields[item][self.CURRENT_VAL_ATTR]
 
     # gets the bytes of some data member
     # data_member - the name of the data member
-    def get_data_member_bytes(self, data_member_name):
-        pass
+    def get_data_member_bytes(self, data_member_name):            
+        # sanity check
+        if data_member_name not in self.struct_fields:
+            raise StructManagerException(exception_val=StructManagerException.ITEM_DOES_NOT_EXIST)
 
     # reloads struct with a new template
     # template_file - json file describing struct format
@@ -145,6 +167,9 @@ class StructManager(object):
             added_field[self.SIZE_ATTR] = field[self.SIZE_ATTR]
             added_field[self.TYPE_ATTR] = field[self.TYPE_ATTR]
             added_field[self.ENDIANITY_ATTR] = struct_endianity
+            added_field[self.CURRENT_VAL_ATTR] = [0 for i in range(0, field[self.SIZE_ATTR] /
+                                                            self.possible_types[field[self.TYPE_ATTR]][1])]
+
             struct_size += field[self.SIZE_ATTR]
             fields[field_name] = added_field
 
@@ -172,6 +197,56 @@ class StructManager(object):
     def set_data_member_endianity(self, data_member, endianity):
         pass
 
+    # validates if some value could be placed into some field
+    # field_name - name of the required struct field
+    # value - field value (if array this should be a list)
+    def __validate(self, field_name, value_list):
+
+        item_range = self.struct_fields[field_name][self.RANGE_ATTR]
+        black_list = self.struct_fields[field_name][self.BLACK_LIST_ATTR]
+        default_val = self.struct_fields[field_name][self.DEFAULT_ATTR]
+        field_type = self.struct_fields[field_name][self.TYPE_ATTR]
+        field_size = self.struct_fields[field_name][self.SIZE_ATTR]
+        type_size = self.possible_types[field_type][1]
+
+        # number of list items is equal to needed array size
+        if len(value_list) != (field_size / type_size):
+            raise StructManagerException(exception_val=StructManagerException.BAD_SET_VALUE,
+                                         str_error="Cannot assign value to %s, data member is an array in the "
+                                                   "size of %d, and %d values were given" %
+                                                   (field_name, field_size / type_size, len(value_list)))
+        # Go through all values given to dm (possibley each dm is an array)
+        for item_value in value_list:
+            # If a default value was set, dm or each dm cell (if an array) must be equal to
+            # default value
+            if default_val is not None:
+                if item_value != default_val:
+                    raise StructManagerException(exception_val=StructManagerException.BAD_SET_VALUE,
+                                                 str_error="Cannot assign value to %s, as data member must have a" \
+                                                 " default value of %d" % (field_name, default_val))
+                else:
+                    continue
+            # no default value was set
+            else:
+                # item is within possible range
+                if item_range is None:
+                    if item_value not in range(0, 2 ** (8 * type_size)):
+                        raise StructManagerException(exception_val=StructManagerException.BAD_SET_VALUE,
+                                                     str_error="Cannot assign value to %s, value must be in range of"
+                                                     " %d to %d" % (field_name, 0, 2 ** (8 * type_size)))
+                # item is within set range
+                else:
+                    if item_value not in range(item_range[0], item_range[1]):
+                        raise StructManagerException(exception_val=StructManagerException.BAD_SET_VALUE,
+                                                     str_error="Cannot assign value to %s, value must be in range of"
+                                                     " %d to %d" % (field_name, item_range[0], item_range[1]))
+                # item isnt within black list
+                if black_list is not None and item_value in black_list:
+                    raise StructManagerException(exception_val=StructManagerException.BAD_SET_VALUE,
+                                                 str_error="Cannot assign value to %s, value must not be within black"
+                                                 "list of values which is: %s" % (field_name, ", ".join(
+                                                    map(lambda n: str(n), black_list))))
+
 
 # Encodes a dictionary from unicode dict to ascii
 # unicode_dict - dict that needs encoding
@@ -181,6 +256,7 @@ def encode_unicode_dict(unicode_dict):
 
     dict_list = []
 
+    # go through all pairs within dict
     for pair in unicode_dict.items():
         new_pair = map(lambda item: encode_unicode_dict(item) if isinstance(item, dict) else
                        item.encode("ascii") if isinstance(item, unicode) else item, pair)

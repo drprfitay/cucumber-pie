@@ -13,6 +13,8 @@ class StructManagerException(BaseException):
     BAD_RANGE = 7
     BAD_DEFAULT_VAL = 8
     BAD_BLACK_LIST_VAL = 9
+    ITEM_DOES_NOT_EXIST = 10
+    BAD_SET_VALUE = 11
 
     # Error dict
     ERRORS_DICT = {STRUCT_MANAGER_ERROR: ("Unknown error has occured",
@@ -44,7 +46,9 @@ class StructManagerException(BaseException):
                    BAD_RANGE: ("Bad range given, range must contain both %s and %s, with possible numeric values" %
                                ("\"lower-range\"", "\"upper-range\""), "Bad range"),
                    BAD_DEFAULT_VAL: ("Bad default val given, must be a possible numeric value", "Bad default val"),
-                   BAD_BLACK_LIST_VAL: ("Black list must be a list of possibe forbidden values", "Bad black list")}
+                   BAD_BLACK_LIST_VAL: ("Black list must be a list of possibe forbidden values", "Bad black list"),
+                   ITEM_DOES_NOT_EXIST: ("Data member doesnt exist within struct", "Item doesnt exist"),
+                   BAD_SET_VALUE: ("Cannot assign given value to some field", "Bad set value")}
 
     def __init__(self,
                  exception_val=STRUCT_MANAGER_ERROR,
