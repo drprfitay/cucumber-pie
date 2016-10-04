@@ -1,0 +1,29 @@
+{ "endianity": "little",
+  "fields":
+  {
+    "some_field":
+    {
+        "type": "dword",
+        "size": 8,
+        "lower-range": 0,
+        "upper-range": 50,
+        "index": 2
+    },
+    "another_field":
+    {
+        "type": "byte",
+        "size": 5,
+        "index": 5
+    },
+    "last_field":
+    {
+        "type": "byte",
+        "size": 1,
+        "index": 8,
+        "black-list-values":  [200, 2, 255, 4, 5],
+        "lower-range": 56,
+        "upper-range": 255
+
+    }
+  }
+}
