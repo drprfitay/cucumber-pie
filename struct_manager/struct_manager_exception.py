@@ -15,6 +15,7 @@ class StructManagerException(BaseException):
     BAD_BLACK_LIST_VAL = 9
     ITEM_DOES_NOT_EXIST = 10
     BAD_SET_VALUE = 11
+    BAD_BYTEARRAY_SIZE = 12
 
     # Error dict
     ERRORS_DICT = {STRUCT_MANAGER_ERROR: ("Unknown error has occured",
@@ -48,7 +49,8 @@ class StructManagerException(BaseException):
                    BAD_DEFAULT_VAL: ("Bad default val given, must be a possible numeric value", "Bad default val"),
                    BAD_BLACK_LIST_VAL: ("Black list must be a list of possibe forbidden values", "Bad black list"),
                    ITEM_DOES_NOT_EXIST: ("Data member doesnt exist within struct", "Item doesnt exist"),
-                   BAD_SET_VALUE: ("Cannot assign given value to some field", "Bad set value")}
+                   BAD_SET_VALUE: ("Cannot assign given value to some field", "Bad set value"),
+                   BAD_BYTEARRAY_SIZE: ("Invalid byte array size", "Bad bytearray size")}
 
     def __init__(self,
                  exception_val=STRUCT_MANAGER_ERROR,

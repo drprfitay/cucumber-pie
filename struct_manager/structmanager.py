@@ -1,3 +1,17 @@
+###############################################
+#              structmanager
+# 
+# Author: DrPrItay
+#
+# Description: This python model wrapps struct 
+# usage and allows creating some struct by 
+# a predefined json, also gives access to
+# data members of the struct and manipulation
+# of those as described within the json format 
+# previously
+#
+###############################################
+
 from struct import pack, unpack
 from struct_manager_exception import *
 import json
@@ -195,20 +209,57 @@ class StructManager(object):
         return "".join([self.get_data_member_bytes(field_name) for field_name in sorted_field_names])
 
     # deserializes struct into some byte_array
-    def desrialize(self, byte_array):
-        pass
+    def deserialize(self, byte_array):
+        # sanity check
+        if len(byte_array) != self.struct_size:
+            raise StructManagerException(exception_val=StructManagerException.BAD_BYTEARRAY_SIZE)
+
+        sorted_fields = self.struct_fields.items()
+        sorted_fields.sort(key=lambda tup: tup[1][self.INDEX_ATTR]) 
+        byte_array_ptr = 0
+
+        # Deserialize each field
+        for data_member_name, data_member_dict in sorted_fields:
+            type_format = self.possible_types[data_member_dict[self.TYPE_ATTR]][0]
+            type_size = self.possible_types[data_member_dict[self.TYPE_ATTR]][1]
+            field_size = data_member_dict[self.SIZE_ATTR]
+            field_endianity = self.possible_endianity[data_member_dict[self.ENDIANITY_ATTR]]
+
+            # Deserialize field from bytearray using bytearray ptr
+            data_member_values = map(lambda x: x, 
+                                     unpack(field_endianity + str(field_size / type_size) + type_format, 
+                                            byte_array[byte_array_ptr: byte_array_ptr + field_size]))
+
+            self.__validate(data_member_name, data_member_values)
+
+            # Forward ptr and set val
+            byte_array_ptr += field_size
+            self[data_member_name] = data_member_values
 
     # sets the default endianity of the struct
     # endianity - type of endianity, little or big
     def set_endianity(self, endianity):
-        pass
+        # Set endianity of all fields, if invalid endianity set_data_member_endianity would raise 
+        # an error
+        for field in self.struct_fields.keys():
+            self.set_data_member_endianity(field, endianity)
+
+        # if reached this, no error was raised hence endianity is valid
+        self.struct_endianity = endianity
 
     # sets the default endianity of a specific
     # data member within the struct
     # data_member - data member name
     # endianity - type of endianity, little or big
     def set_data_member_endianity(self, data_member, endianity):
-        pass
+        # sanity check
+        if data_member not in self.struct_fields:
+            raise StructManagerException(exception_val=StructManagerException.ITEM_DOES_NOT_EXIST)
+
+        if endianity not in self.possible_endianity:
+            raise StructManagerException(exception_val=StructManagerException.INVALID_ENDIANITY_TYPE)        
+
+        self.struct_fields[data_member][self.ENDIANITY_ATTR] = endianity
 
     # validates if some value could be placed into some field
     # field_name - name of the required struct field
