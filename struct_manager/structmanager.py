@@ -62,10 +62,18 @@ class StructManager(object):
 
     # gets the bytes of some data member
     # data_member - the name of the data member
-    def get_data_member_bytes(self, data_member_name):            
+    def get_data_member_bytes(self, data_member_name):
         # sanity check
         if data_member_name not in self.struct_fields:
             raise StructManagerException(exception_val=StructManagerException.ITEM_DOES_NOT_EXIST)
+
+        type_format = self.possible_types[self.struct_fields[data_member_name][self.TYPE_ATTR]][0]
+        type_size = self.possible_types[self.struct_fields[data_member_name][self.TYPE_ATTR]][1]
+        field_size = self.struct_fields[data_member_name][self.SIZE_ATTR]
+        field_endianity = self.possible_endianity[self.struct_fields[data_member_name][self.ENDIANITY_ATTR]]
+
+        return pack(field_endianity + str(field_size / type_size) + type_format, 
+                    *self.struct_fields[data_member_name][self.CURRENT_VAL_ATTR])
 
     # reloads struct with a new template
     # template_file - json file describing struct format
@@ -164,6 +172,7 @@ class StructManager(object):
 
                 added_field[self.BLACK_LIST_ATTR] = field[self.BLACK_LIST_ATTR]
 
+            added_field[self.INDEX_ATTR] = field[self.INDEX_ATTR]
             added_field[self.SIZE_ATTR] = field[self.SIZE_ATTR]
             added_field[self.TYPE_ATTR] = field[self.TYPE_ATTR]
             added_field[self.ENDIANITY_ATTR] = struct_endianity
@@ -179,7 +188,11 @@ class StructManager(object):
 
     # serializes struct into a byte array
     def serialize(self):
-        pass
+        sorted_field_names = self.struct_fields.items()
+        sorted_field_names.sort(key=lambda tup: tup[1][self.INDEX_ATTR])
+        sorted_field_names = [pair[0] for pair in sorted_field_names]
+
+        return "".join([self.get_data_member_bytes(field_name) for field_name in sorted_field_names])
 
     # deserializes struct into some byte_array
     def desrialize(self, byte_array):

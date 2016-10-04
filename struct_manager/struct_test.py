@@ -14,7 +14,10 @@ for pair in a.struct_fields.items():
 
 print a.struct_size
 
-a["last_field"] = 200
+a["another_field"] = [ord('a') + i for i in range(0, 5)]
 
-print a["last_field"]
+a["some_field"] = [32, 34]
+a["last_field"] = 198
+
+print a.serialize()
 

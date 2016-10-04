@@ -13,8 +13,7 @@
     {
         "type": "byte",
         "size": 5,
-        "index": 5,
-        "default-value": 5
+        "index": 5
     },
     "last_field":
     {
